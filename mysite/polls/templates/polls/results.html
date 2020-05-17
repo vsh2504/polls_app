@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+  </head>
+  <body>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <h1>{{ question.question_text }}</h1>
+
+    <ul>
+    {% for choice in question.choice_set.all %}
+        <li>{{ choice.choice_text }} -- {{ choice.votes }} vote{{ choice.votes|pluralize }}</li>
+    {% endfor %}
+    </ul>
+
+    <a href="{% url 'polls:detail' question.id %}">Vote again?</a>
+    
+    <!-- ELEMENT WRAPPER -->
+    <div id="myChart"></div>
+    <!-- CHARTS -->
+
+    <script src="https://cdn.zingchart.com/zingchart.min.js"></script>
+
+    <script>
+      var  choice_list = []
+      var choice_votes = []
+      var myConfig;
+      var question_id = {{question.id}}
+
+      console.log(question_id)
+      console.log(typeof(question_id))
+
+      var dataUrl = `/polls/resultsdata/${question_id}/`
+
+      function buildChartData(){
+        myConfig = {
+          type: 'bar',
+          title: {
+            text: 'Polls Results',
+            fontSize: 24,
+          },
+          legend: {
+            draggable: true,
+          },
+          scaleX: {
+            // Set scale label
+
+            label: { text: 'Choices' },
+            // Convert text on scale indices
+            // [question.choice_set.all()]
+            labels: choice_list
+          },
+          scaleY: {
+            // Scale label with unicode character
+            label: { text: 'Votes' }
+          },
+          plot: {
+            // Animation docs here:
+            // https://www.zingchart.com/docs/tutorials/styling/animation#effect
+            animation: {
+              effect: 'ANIMATION_EXPAND_BOTTOM',
+              method: 'ANIMATION_STRONG_EASE_OUT',
+              sequence: 'ANIMATION_BY_NODE',
+              speed: 275,
+            }
+          },
+          series: [
+            {
+              // plot 1 values, linear data
+              // values: [23,20,27,29,25,17,15],//question.choice_set.votes()
+              values: choice_votes,
+              // text: None, //Nothing
+            },
+            // {
+            //   // plot 2 values, linear data
+            //   values: [35,42,33,49,35,47,35],
+            //   text: 'Week 2'
+            // },
+            // {
+            //   // plot 2 values, linear data
+            //   values: [15,22,13,33,44,27,31],
+            //   text: 'Week 3'
+            // }
+          ]
+        };
+
+        console.log(myConfig)
+
+        zingchart.render({
+          id: 'myChart',
+          data: myConfig,
+        });
+      }
+
+      $.ajax({
+        method:"GET",
+        url:dataUrl,
+        success:function(response){
+          console.log('RESPONSE:',response)
+          for (var i in response){
+            var key = Object.keys(response[i])[0]
+				    var value = Object.values(response[i])[0]
+
+				    choice_list.push(key)
+				    choice_votes.push(value)
+          }
+
+          console.log('Choice list: ',choice_list)
+          console.log('Votes: ',choice_votes)
+
+          buildChartData();
+        }
+      })
+
+  </script>
+
+  </body>
+</html>
